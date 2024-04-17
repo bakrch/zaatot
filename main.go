@@ -12,6 +12,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%s --- MonkeyLang REPL\n", user.Username)
+	fmt.Printf("%s --- Zaatot REPL\n", user.Username)
 	repl.Start(os.Stdin, os.Stdout)
 }

@@ -128,12 +128,6 @@ func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Enviro
 	}
 	return env
 }
-func unwrapReturnValue(obj object.Object) object.Object {
-	if returnValue, ok := obj.(*object.ReturnValue); ok {
-		return returnValue.Value
-	}
-	return obj
-}
 func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
 	var result object.Object
 
@@ -274,6 +268,13 @@ func isTruthy(obj object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func unwrapReturnValue(obj object.Object) object.Object {
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return obj
 }
 
 func isError(obj object.Object) bool {

@@ -7,6 +7,43 @@ import (
 	"testing"
 )
 
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let identity = fn(x) { x; }; identity(5);", 5},
+		{"let identity = fn(x) { return x; }; identity(5);", 5},
+		{"let double = fn(x) { return x * 2; }; double(5);", 10},
+		{"let add = fn(x, y) { return x + y; }; add(5, 5);", 10},
+		{"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"fn(x) { return x; }(5)", 5},
+	}
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
+
+func TestFunctionObject(t *testing.T) {
+	input := "fn(x) { x + 2; };"
+	evaluated := testEval(input)
+	fn, ok := evaluated.(*object.Function)
+	if !ok {
+		t.Fatalf("Object is not Function. Got=%T (%+v)", evaluated, evaluated)
+	}
+	if len(fn.Parameters) != 1 {
+	}
+
+	if fn.Parameters[0].String() != "x" {
+		t.Fatalf("Parameter is not 'x'. Got=%q", fn.Parameters[0])
+	}
+	expectedBody := "(x + 2)"
+	if fn.Body.String() != expectedBody {
+		t.Fatalf("body is not %q. Got=%q", expectedBody, fn.Body.String())
+	}
+
+}
+
 func TestLetStatements(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -35,7 +72,7 @@ func TestErrorHandling(t *testing.T) {
 		{"5; true + false; 5", "Unknown operator: BOOLEAN + BOOLEAN"},
 		{"if (10 > 1) { true + false; }", "Unknown operator: BOOLEAN + BOOLEAN"},
 		{"if (10 > 1) { if (10 > 1) { true + false; } return 1;}", "Unknown operator: BOOLEAN + BOOLEAN"},
-		{"foobar", "identifier not found: foobar"},
+		{"foobar", "Identifier not found: foobar"},
 	}
 
 	for _, tt := range tests {

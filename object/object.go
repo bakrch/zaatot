@@ -11,17 +11,28 @@ type ObjectType string
 
 const (
 	INTEGER_OBJ      = "INTEGER"
+	STRING_OBJ       = "STRING"
 	BOOLEAN_OBJ      = "BOOLEAN"
 	NULL_OBJ         = "NIL"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
 	ERROR_OBJ        = "ERROR"
 	FUNCTION_OBJ     = "FUNCTION"
+	BUILTIN_OBJ      = "BUILTIN"
 )
 
 type Object interface {
 	Type() ObjectType
 	Inspect() string
 }
+
+type BuiltinFunction func(args ...Object) Object
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
+func (b *Builtin) Inspect() string  { return "Builtin function" }
+
 type ReturnValue struct {
 	Value Object
 }
@@ -36,19 +47,26 @@ type Integer struct {
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
 
+type String struct {
+	Value string
+}
+
+func (s *String) Type() ObjectType { return STRING_OBJ }
+func (s *String) Inspect() string  { return fmt.Sprintf("\"%s\"", s.Value) }
+
 type Boolean struct {
 	Value bool
 }
 
-func (i *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
-func (i *Boolean) Inspect() string  { return fmt.Sprintf("%t", i.Value) }
+func (b *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
+func (b *Boolean) Inspect() string  { return fmt.Sprintf("%t", b.Value) }
 
 type Null struct {
 	Value bool
 }
 
-func (i *Null) Type() ObjectType { return NULL_OBJ }
-func (i *Null) Inspect() string  { return "null" }
+func (n *Null) Type() ObjectType { return NULL_OBJ }
+func (n *Null) Inspect() string  { return "null" }
 
 type Error struct {
 	Message string

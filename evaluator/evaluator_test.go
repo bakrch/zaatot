@@ -7,6 +7,37 @@ import (
 	"testing"
 )
 
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("Hello world")`, 11},
+		{`len(1)`, "Argument to `len` not supported, got INTEGER"},
+		{`len(1)`, "Argument to `len` not supported, got INTEGER"},
+		{`len("one","two")`, "Wrong number of arguments. Got=2, want=1"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case string:
+			errObj, ok := evaluated.(*object.Error)
+			if !ok {
+				t.Errorf("Object is not Error. Got=%T (%+v)", evaluated, evaluated)
+				continue
+			}
+			if errObj.Message != expected {
+				t.Errorf("Wrong error message. Expected=%q, got=%q")
+			}
+		}
+	}
+}
+
 func TestClosures(t *testing.T) {
 	input := `
 	let newAdder = fn(x) {
@@ -71,6 +102,18 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " " + "World !"`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("Object is not string. Got=%T (%+v)", evaluated, evaluated)
+	}
+	if str.Value != "Hello World !" {
+		t.Errorf("String has wrong value. Got=%q", str.Value)
+	}
+}
+
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
 		input           string
@@ -84,6 +127,7 @@ func TestErrorHandling(t *testing.T) {
 		{"if (10 > 1) { true + false; }", "Unknown operator: BOOLEAN + BOOLEAN"},
 		{"if (10 > 1) { if (10 > 1) { true + false; } return 1;}", "Unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "Identifier not found: foobar"},
+		{`"Hello" - "World"`, "Unknown operator: STRING - STRING"},
 	}
 
 	for _, tt := range tests {
@@ -139,6 +183,21 @@ func TestIfElseExpression(t *testing.T) {
 		} else {
 			testNullObject(t, evaluated)
 		}
+	}
+}
+
+func TestEvalStringExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"\"\"", ""},
+		{"\"10\"", "10"},
+		{"\"Hello\"", "Hello"},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testStringObject(t, evaluated, tt.expected)
 	}
 }
 
@@ -229,6 +288,19 @@ func testEval(input string) object.Object {
 func testNullObject(t *testing.T, obj object.Object) bool {
 	if obj != NULL {
 		t.Errorf("Object is not NULL. Got=%T (%+v)", obj, obj)
+		return false
+	}
+	return true
+}
+
+func testStringObject(t *testing.T, obj object.Object, expected string) bool {
+	result, ok := obj.(*object.String)
+	if !ok {
+		t.Errorf("Object is not String. Got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("Object has wrong value. Got=%s. Want=%s", result.Value, expected)
 		return false
 	}
 	return true

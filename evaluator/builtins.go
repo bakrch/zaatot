@@ -1,27 +1,72 @@
 package evaluator
 
 import (
-	"fmt"
 	"monkey/object"
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": &object.Builtin{
+	"len": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				message := fmt.Sprintf("Wrong number of arguments. Got=%d, want=%d", len(args), 1)
-				return &object.Error{
-					Message: message,
-				}
+				return newError("Wrong number of arguments. Got=%d, want=1", len(args))
 			}
-			str, ok := args[0].(*object.String)
-			if !ok {
-				message := fmt.Sprintf("Argument to `len` not supported, got %T", str)
-				return &object.Error{
-					Message: message,
-				}
+			switch arg := args[0].(type) {
+			case *object.String:
+				return &object.Integer{Value: int64(len(arg.Value))}
+			case *object.Array:
+				return &object.Integer{Value: int64(len(arg.Elements))}
+			default:
+				return newError("Argument to `len` not supported, got %s", args[0].Type())
 			}
-			return &object.Integer{Value: int64(len(str.Value))}
+		},
+	},
+	"first": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got=%d, want=1", len(args))
+			}
+			if args[0].Type() != object.ARRAY_OBJ {
+				return newError("argument to `first` must be ARRAY, got %s", args[0].Type())
+			}
+			arr := args[0].(*object.Array)
+			if len(arr.Elements) > 0 {
+				return arr.Elements[0]
+			}
+			return NULL
+		},
+	},
+	"last": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got=%d, want=1", len(args))
+			}
+			if args[0].Type() != object.ARRAY_OBJ {
+				return newError("argument to `first` must be ARRAY, got %s", args[0].Type())
+			}
+			arr := args[0].(*object.Array)
+			if len(arr.Elements) > 0 {
+				return arr.Elements[len(arr.Elements)-1]
+			}
+			return NULL
+		},
+	},
+	"rest": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("Wrong number of arguments. Got=%d, want=1", len(args))
+			}
+			if args[0].Type() != object.ARRAY_OBJ {
+				return newError("argument to `first` must be ARRAY, got %s", args[0].Type())
+			}
+
+			arr := args[0].(*object.Array)
+			length := len(arr.Elements) - 1
+			if len(arr.Elements) > 0 {
+				newElements := make([]object.Object, length, length)
+				copy(newElements, arr.Elements[1:length+1])
+				return &object.Array{Elements: newElements}
+			}
+			return NULL
 		},
 	},
 }

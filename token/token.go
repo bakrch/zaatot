@@ -28,6 +28,7 @@ const (
 	NOT_EQ   = "!="
 	/*  DELIMITERS */
 	COMMA     = ","
+	COLON     = ":"
 	SEMICOLON = ";"
 	LPAREN    = "("
 	RPAREN    = ")"

@@ -116,6 +116,15 @@ func (a *Array) Inspect() string {
 	return out.String()
 }
 
+func (a *Array) Equals(other *Array) bool {
+	for i, el := range a.Elements {
+		if el.Inspect() != other.Elements[i].Inspect() {
+			return false
+		}
+	}
+	return true
+}
+
 type Boolean struct {
 	Value bool
 }

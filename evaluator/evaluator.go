@@ -255,6 +255,8 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 		return evalStringInfixExpression(operator, left, right)
 	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
 		return evalBooleanInfixExppression(operator, left, right)
+	case left.Type() == object.ARRAY_OBJ && right.Type() == object.ARRAY_OBJ:
+		return evalArrayInfixExppression(operator, left, right)
 	case left.Type() != right.Type():
 		return newError("Type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	default:
@@ -276,6 +278,18 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 	}
 }
 
+func evalArrayInfixExppression(operator string, left object.Object, right object.Object) object.Object {
+	leftArr := left.(*object.Array)
+	rightArr := right.(*object.Array)
+	switch operator {
+	case "==":
+		return nativeBoolToBooleanObject(leftArr.Equals(rightArr))
+	case "!=":
+		return nativeBoolToBooleanObject(!leftArr.Equals(rightArr))
+	default:
+		return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
 func evalBooleanInfixExppression(operator string, left object.Object, right object.Object) object.Object {
 
 	leftValue := left.(*object.Boolean).Value
@@ -297,6 +311,8 @@ func evalStringInfixExpression(operator string, left object.Object, right object
 	switch operator {
 	case "+":
 		return &object.String{Value: leftValue + rightValue}
+	case "==":
+		return nativeBoolToBooleanObject(leftValue == rightValue)
 	default:
 		return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}

@@ -142,6 +142,49 @@ func TestParsingArrayLiterals(t *testing.T) {
 	testInfixExpression(t, array.Elements[2], 3, "+", 3)
 }
 
+func TestIdentifierReassign(t *testing.T) {
+
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		expectedValue      interface{}
+	}{
+		{"x = 5;", "x", 5},
+		{"y = true;", "y", true},
+		{"foobar = y;", "foobar", "y"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if program == nil {
+			t.Fatalf("ParseProgram() returned nil")
+		}
+		fmt.Println(program.Statements)
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+		}
+		stmt := program.Statements[0]
+		val := stmt.(*ast.IdentifierStatement).Value
+		if !testLiteralExpression(t, val, tt.expectedValue) {
+			return
+		}
+		assignStmt, ok := stmt.(*ast.IdentifierStatement)
+		if !ok {
+			t.Errorf("s not *ast.LetStatement. got=%T", stmt)
+		}
+		if assignStmt.Name.Value != tt.expectedIdentifier {
+			t.Errorf("letStmt.Name.Value not '%s'. got=%s", tt.expectedIdentifier, assignStmt.Name.Value)
+		}
+		if assignStmt.Name.TokenLiteral() != tt.expectedIdentifier {
+			t.Errorf("letStmt.Name.TokenLiteral() not '%s'. got=%s", tt.expectedIdentifier, assignStmt.Name.TokenLiteral())
+		}
+	}
+}
+
 func TestLetStatements(t *testing.T) {
 
 	tests := []struct {
@@ -246,6 +289,14 @@ func testReturnStatement(t *testing.T, s ast.Statement) bool {
 	}
 	return true
 }
+
+func TestParsingForStatements(t *testing.T) {
+	input := `
+	for (let i = 0; i < 1; i = i + 1) { x }
+	`
+	testLoopExpression(t, input)
+}
+
 func TestIfExpression(t *testing.T) {
 	input := `
 	if (x < y) { x }
@@ -607,6 +658,46 @@ func testConditionalExpression(t *testing.T, input string, hasAlternative bool) 
 		if !testIdentifier(t, alternative.Expression, "y") {
 			return
 		}
+	}
+}
+
+func testLoopExpression(t *testing.T, input string) {
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	input = `
+	for (let i = 0; i < 1; i = i + 1) { x }
+	`
+	fmt.Println(p)
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain %d statements. Got=%d\n", 1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not an ast.ExpressionStatement. Got=%T", program.Statements[0])
+	}
+	exp, ok := stmt.Expression.(*ast.ForExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.IfExpression. Got=%T", stmt.Expression)
+	}
+	if !testLetStatement(t, exp.LoopParams.InitStatement, "i") {
+		return
+	}
+	if !testInfixExpression(t, exp.LoopParams.ConditionalExpression, "i", "<", 1) {
+		return
+	}
+	// if !TestIdentifierReassign(t, exp.LoopParams.StepStatement, "i", "=", "i + 1") {
+	// 	return
+	// }
+	consequence, ok := exp.LoopBlock.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Statements[0] is not ast.ExpressionStatement. Got=%T", exp.LoopBlock.Statements[0])
+	}
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
 	}
 }
 

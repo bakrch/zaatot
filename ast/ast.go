@@ -130,6 +130,27 @@ func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
 
+type IdentifierStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (is *IdentifierStatement) statementNode()       {}
+func (is *IdentifierStatement) TokenLiteral() string { return is.Token.Literal }
+func (is *IdentifierStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(is.Name.String())
+	out.WriteString(" = ")
+	if is.Value != nil {
+		out.WriteString(is.Value.String())
+	}
+	out.WriteString(";")
+
+	return out.String()
+}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -266,6 +287,32 @@ func (ie *IfExpression) String() string {
 		out.WriteString("else ")
 		out.WriteString(ie.Alternative.String())
 	}
+	return out.String()
+}
+
+type LoopParameters struct {
+	InitStatement         Statement
+	ConditionalExpression Expression
+	StepStatement         Statement
+}
+type ForExpression struct {
+	Token      token.Token
+	LoopParams LoopParameters
+	LoopBlock  *BlockStatement
+}
+
+func (fe *ForExpression) expressionNode()      {}
+func (fe *ForExpression) TokenLiteral() string { return fe.Token.Literal }
+func (fe *ForExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("for")
+	out.WriteString(fe.LoopParams.InitStatement.String())
+	out.WriteString(";")
+	out.WriteString(fe.LoopParams.ConditionalExpression.String())
+	out.WriteString(";")
+	out.WriteString(fe.LoopParams.StepStatement.String())
+	out.WriteString(" ")
+	out.WriteString(fe.LoopBlock.String())
 	return out.String()
 }
 

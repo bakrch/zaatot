@@ -40,7 +40,7 @@ func Start(in io.Reader, out io.Writer) {
 }
 
 func printParserErrors(out io.Writer, errors []string) {
-	io.WriteString(out, "Wili wili wili... 9ryed!\n")
+	io.WriteString(out, "Wili wili wili... \n")
 	io.WriteString(out, "Parsing errors:\n")
 	for _, msg := range errors {
 

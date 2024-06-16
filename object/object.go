@@ -19,6 +19,7 @@ const (
 	NULL_OBJ         = "NIL"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
 	ERROR_OBJ        = "ERROR"
+	FOR_OBJ          = "FOR"
 	FUNCTION_OBJ     = "FUNCTION"
 	BUILTIN_OBJ      = "BUILTIN"
 )
@@ -154,6 +155,28 @@ type Error struct {
 
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
 func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
+
+type For struct {
+	Parameters *ast.LoopParameters
+	Body       *ast.BlockStatement
+	Env        *Environment
+}
+
+func (f *For) Type() ObjectType { return FOR_OBJ }
+func (f *For) Inspect() string {
+	var out bytes.Buffer
+
+	out.WriteString("for (")
+	out.WriteString(f.Parameters.InitStatement.String())
+	out.WriteString(";")
+	out.WriteString(f.Parameters.ConditionalExpression.String())
+	out.WriteString(";")
+	out.WriteString(f.Parameters.StepStatement.String())
+	out.WriteString(") {\n")
+	out.WriteString(f.Body.String())
+	out.WriteString("\n}")
+	return out.String()
+}
 
 type Function struct {
 	Parameters []*ast.Identifier

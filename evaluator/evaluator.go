@@ -53,6 +53,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
 
+	case *ast.ForExpression:
+		return evalForExpression(node, env)
 	case *ast.IndexExpression:
 		left := Eval(node.Left, env)
 		if isError(left) {
@@ -275,6 +277,20 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 		return Eval(ie.Alternative, env)
 	} else {
 		return NULL
+	}
+}
+func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
+	forObj := &object.For{Parameters: &fe.LoopParams, Env: env, Body: fe.LoopBlock}
+	condition := Eval(fe.LoopParams.ConditionalExpression, env)
+	env := object.NewEnclosedEnvironment(forObj.Env)
+	env.Set(param.Value, args[paramIdx])
+	for paramIdx, param := range fn.Parameters {
+	}
+	if isError(condition) {
+		return condition
+	}
+	for isTruthy(condition) {
+		evalBlockStatement(fe.LoopBlock, env)
 	}
 }
 
